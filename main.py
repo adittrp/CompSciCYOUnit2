@@ -1,8 +1,11 @@
-def print_hi(name):
-    # Use a breakpoint in the code line below to debug your script.
-    print(f'Hi, {name}')  # Press Ctrl+F8 to toggle the breakpoint.
+import pygame
+
+pygame.init()
+
+window = pygame.display.set_mode((1000, 1000))
+pygame.display.set_caption("Calculus Tutor")
 
 
-# Press the green button in the gutter to run the script.
-if __name__ == '__main__':
-    print_hi('Sanjay is a GOAT')
+running = True
+while running:
+    pygame.display.flip()
