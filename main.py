@@ -15,7 +15,7 @@ FONT = pygame.font.Font(None, 74)
 
 # Screen setup
 window = pygame.display.set_mode((WINDOW_WIDTH, WINDOW_HEIGHT))
-pygame.display.set_caption("Derivative Calculator")
+pygame.display.set_caption("Math Tutor")
 
 
 # Helper function to draw buttons

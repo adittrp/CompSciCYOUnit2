@@ -1,4 +1,5 @@
 import pygame
+import sys
 from button import Button
 from collections import deque
 
@@ -81,40 +82,40 @@ class DerivativeCalculator:
         """Parse polynomial input into a list of (coefficient, power) tuples."""
         stack = deque()
         i = 0
-        last_was_operator = False
+        sign = 1  # To track current sign (+1 for positive, -1 for negative)
 
         while i < len(expression):
-            if expression[i].isdigit():  # Parse coefficient
+            if expression[i] in {'+', '-'}:  # Update the sign
+                sign = -1 if expression[i] == '-' else 1
+                i += 1
+            elif expression[i].isdigit():  # Parse coefficient
                 num = ""
                 while i < len(expression) and expression[i].isdigit():
                     num += expression[i]
                     i += 1
-                stack.append((int(num), 0))  # Append constant
-                last_was_operator = False
+                stack.append((sign * int(num), 0))  # Append constant with sign
+                sign = 1  # Reset sign after parsing a term
             elif expression[i] == 'x':  # Parse variable term
-                power = 1
-                coeff = 1 if not stack or last_was_operator else stack.pop()[0]
+                coeff = sign  # Default coefficient is the current sign
+                power = 1  # Default power is 1
+
+                # Check for coefficient before 'x'
+                if stack and isinstance(stack[-1], tuple) and stack[-1][1] == 0:
+                    coeff = stack.pop()[0]
 
                 # Check for exponent
                 if i + 1 < len(expression) and expression[i + 1:i + 2] == '^':
                     i += 2  # Skip '^'
-                    power = int(expression[i])
-                    if power not in {2, 3, 4}:  # Invalid exponent
-                        raise ValueError("Invalid exponent")
-                    i += 1
+                    power = ""
+                    while i < len(expression) and expression[i].isdigit():
+                        power += expression[i]
+                        i += 1
+                    power = int(power)
 
                 stack.append((coeff, power))
-                last_was_operator = False
-            elif expression[i] in {'+', '-'}:  # Operators
-                if last_was_operator or i == len(expression) - 1:  # Invalid syntax
-                    raise ValueError("Invalid syntax")
-                last_was_operator = True
-                i += 1
+                sign = 1  # Reset sign after parsing a term
             else:  # Unrecognized character
-                raise ValueError("Invalid character")
-
-        if last_was_operator:  # Expression cannot end with an operator
-            raise ValueError("Expression ends with operator")
+                raise ValueError("Invalid character in expression")
 
         return list(stack)
 
