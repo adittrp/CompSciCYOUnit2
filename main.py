@@ -7,7 +7,7 @@ pygame.init()
 
 # Screen dimensions and colors
 WINDOW_WIDTH, WINDOW_HEIGHT = 1920, 1080
-BACKGROUND_COLOR = (20, 25, 92)
+BACKGROUND_COLOR = (95,158,160)
 BUTTON_COLOR = (0, 128, 255)
 BUTTON_HOVER_COLOR = (0, 100, 200)
 TEXT_COLOR = (255, 255, 255)
@@ -31,13 +31,13 @@ def main_page():
         window.fill(BACKGROUND_COLOR)
 
         # Button rect
-        calculator_btn = pygame.Rect((WINDOW_WIDTH // 2 - 200, WINDOW_HEIGHT // 2 - 50), (400, 100))
+        calculator_btn = pygame.Rect((WINDOW_WIDTH // 2 - 350, WINDOW_HEIGHT // 2 + 200), (700, 150))
 
         # Get mouse position
         mouse_pos = pygame.mouse.get_pos()
 
         # Draw buttons
-        draw_button(window, "Calculator", calculator_btn, calculator_btn.collidepoint(mouse_pos))
+        draw_button(window, "Derivitave Calculator", calculator_btn, calculator_btn.collidepoint(mouse_pos))
 
         # Event handling
         for event in pygame.event.get():

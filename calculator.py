@@ -23,9 +23,9 @@ class DerivativeCalculator:
             ('x', 'x^2', 'x^3', '-'),
             ('0', 'x^4', 'Solve', 'Back'),
         )
-        start_x, start_y = 600, 300
+        start_x, start_y = 725, 425
         button_width, button_height = 100, 100
-        spacing = 10
+        spacing = 20
 
         for row_index, row in enumerate(button_labels):
             for col_index, label in enumerate(row):
@@ -51,22 +51,27 @@ class DerivativeCalculator:
             self.back_function()
 
     def solve(self):
+        """
+        Solve the derivative of the polynomial represented by self.current_input.
+        Returns the derivative as a string.
+        """
         if not self.current_input:
-            return "ERROR"  # No input provided
+            return "ERROR"  # Return an error if the input is empty
 
         try:
+            # Tokenize the input into terms
             terms = self.tokenize(self.current_input)
-        except ValueError:  # Error during tokenization
-            return "ERROR"
+        except ValueError:
+            return "ERROR"  # Return an error for invalid input
 
         # If it's just a constant, return 0
         if len(terms) == 1 and terms[0][1] == 0:
             return "0"
 
-        # Compute the derivative
+        # Compute the derivative using the power rule
         derivative_terms = []
         for coeff, power in terms:
-            if power > 0:  # Compute derivative using power rule
+            if power > 0:  # Apply power rule: d/dx [c * x^n] = n * c * x^(n-1)
                 new_coeff = coeff * power
                 new_power = power - 1
                 if new_power == 0:
@@ -76,46 +81,63 @@ class DerivativeCalculator:
                 else:
                     derivative_terms.append(f"{new_coeff}x^{new_power}")
 
-        return " + ".join(derivative_terms)
+        # Join terms together, ensuring no redundant '+' or '-' signs
+        result = " + ".join(derivative_terms).replace("+ -", "- ")
+        return result
 
     def tokenize(self, expression):
-        """Parse polynomial input into a list of (coefficient, power) tuples."""
+        """
+        Parse a polynomial input string into a list of (coefficient, power) tuples.
+        Handles positive and negative terms, proper placement of coefficients,
+        and ensures valid syntax.
+        """
         stack = deque()
         i = 0
-        sign = 1  # To track current sign (+1 for positive, -1 for negative)
+        sign = 1
+        last_was_operator = True
 
         while i < len(expression):
-            if expression[i] in {'+', '-'}:  # Update the sign
+            if expression[i] in {'+', '-'}:
                 sign = -1 if expression[i] == '-' else 1
+                last_was_operator = True
                 i += 1
-            elif expression[i].isdigit():  # Parse coefficient
+            elif expression[i].isdigit():
                 num = ""
                 while i < len(expression) and expression[i].isdigit():
                     num += expression[i]
                     i += 1
-                stack.append((sign * int(num), 0))  # Append constant with sign
-                sign = 1  # Reset sign after parsing a term
-            elif expression[i] == 'x':  # Parse variable term
-                coeff = sign  # Default coefficient is the current sign
-                power = 1  # Default power is 1
-
-                # Check for coefficient before 'x'
-                if stack and isinstance(stack[-1], tuple) and stack[-1][1] == 0:
-                    coeff = stack.pop()[0]
-
-                # Check for exponent
-                if i + 1 < len(expression) and expression[i + 1:i + 2] == '^':
-                    i += 2  # Skip '^'
-                    power = ""
+                if i < len(expression) and expression[i] == 'x':  # If followed by 'x'
+                    coeff = sign * int(num)  # Use the parsed number as coefficient
+                    power = 1  # Default power for 'x' is 1
+                    i += 1  # Skip 'x'
+                    if i < len(expression) and expression[i] == '^':  # Handle powers
+                        i += 1  # Skip '^'
+                        power_str = ""
+                        while i < len(expression) and expression[i].isdigit():
+                            power_str += expression[i]
+                            i += 1
+                        power = int(power_str)
+                    stack.append((coeff, power))
+                else:  # If not followed by 'x', it's a constant
+                    stack.append((sign * int(num), 0))
+                sign = 1
+                last_was_operator = False
+            elif expression[i] == 'x':
+                coeff = sign  # Default coefficient is 1 (or -1 based on sign)
+                power = 1
+                i += 1
+                if i < len(expression) and expression[i] == '^':  # Handle powers
+                    i += 1  # Skip '^'
+                    power_str = ""
                     while i < len(expression) and expression[i].isdigit():
-                        power += expression[i]
+                        power_str += expression[i]
                         i += 1
-                    power = int(power)
-
+                    power = int(power_str)
                 stack.append((coeff, power))
-                sign = 1  # Reset sign after parsing a term
-            else:  # Unrecognized character
-                raise ValueError("Invalid character in expression")
+                sign = 1
+                last_was_operator = False
+            else:
+                raise ValueError(f"Invalid character in expression: {expression[i]}")
 
         return list(stack)
 
@@ -124,14 +146,14 @@ class DerivativeCalculator:
         self.screen.fill((20, 25, 92))
 
         # Display box for input
-        pygame.draw.rect(self.screen, (255, 255, 255), (600, 150, 500, 80))
+        pygame.draw.rect(self.screen, (255, 255, 255), (710, 225, 500, 80))
         input_surface = self.render_expression(self.current_input, (0, 0, 0))
-        self.screen.blit(input_surface, (610, 160))
+        self.screen.blit(input_surface, (725, 240))
 
         # Display box for result
-        pygame.draw.rect(self.screen, (255, 255, 255), (600, 250, 500, 80))
+        pygame.draw.rect(self.screen, (255, 255, 255), (710, 325, 500, 80))
         result_surface = self.render_expression(self.result, (0, 0, 0))
-        self.screen.blit(result_surface, (610, 260))
+        self.screen.blit(result_surface, (725, 340))
 
         # Draw buttons
         for button in self.buttons:
