@@ -12,6 +12,7 @@ button_color = (0, 128, 255)
 button_hover_color = (0, 100, 200)
 text_color = (255, 255, 255)
 font = pygame.font.Font(None, 74)
+bigFont = pygame.font.Font(None, 150)
 
 window = pygame.display.set_mode((window_width, window_height))
 pygame.display.set_caption("Math Tutor")
@@ -42,6 +43,9 @@ def main_page():
         draw_button(window, "Flashcards", flashcard_btn, flashcard_btn.collidepoint(mouse_pos))
         draw_button(window, "Derivative Calculator", calculator_btn, calculator_btn.collidepoint(mouse_pos))
         draw_button(window, "Schedule", schedule_btn, schedule_btn.collidepoint(mouse_pos))
+
+        title_text = bigFont.render("Math Tutor!", True, (0, 0, 0))
+        window.blit(title_text, (675, 100))
 
         for event in pygame.event.get():
             if event.type == pygame.QUIT or (event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE):
