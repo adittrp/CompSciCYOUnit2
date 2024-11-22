@@ -1,0 +1,193 @@
+Index: calculator.py
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.BaseRevisionTextPatchEP
+<+>import pygame\r\nimport sys\r\nfrom button import Button\r\nfrom collections import deque\r\n\r\nclass DerivativeCalculator:\r\n    def __init__(self, screen, back_function):\r\n        self.screen = screen\r\n        self.running = True\r\n        self.current_input = \"\"\r\n        self.result = \"\"\r\n        self.font = pygame.font.Font(None, 74)\r\n        self.buttons = []\r\n        self.back_function = back_function\r\n        self.create_buttons()\r\n\r\n    def create_buttons(self):\r\n        # 2D array (tuple) for button labels\r\n        button_labels = (\r\n            ('7', '8', '9', 'C'),\r\n            ('4', '5', '6', 'AC'),\r\n            ('1', '2', '3', '+'),\r\n            ('x', 'x^2', 'x^3', '-'),\r\n            ('0', 'x^4', 'Solve', 'Back'),\r\n        )\r\n        start_x, start_y = 600, 300\r\n        button_width, button_height = 100, 100\r\n        spacing = 10\r\n\r\n        for row_index, row in enumerate(button_labels):\r\n            for col_index, label in enumerate(row):\r\n                x = start_x + col_index * (button_width + spacing)\r\n                y = start_y + row_index * (button_height + spacing)\r\n                self.buttons.append(Button(label, x, y, button_width, button_height))\r\n\r\n    def handle_input(self, label):\r\n        if label.isdigit():  # Numbers\r\n            self.current_input += label\r\n        elif label == 'C':  # Backspace\r\n            self.current_input = self.current_input[:-1]\r\n        elif label == 'AC':  # Clear\r\n            self.current_input = \"\"\r\n            self.result = \"\"\r\n        elif label in {'+', '-'}:  # Operators\r\n            self.current_input += label\r\n        elif label in {'x', 'x^2', 'x^3', 'x^4'}:  # Polynomial terms\r\n            self.current_input += label\r\n        elif label == 'Solve':  # Solve for derivative\r\n            self.result = self.solve()\r\n        elif label == 'Back':  # Return to main page\r\n            self.back_function()\r\n\r\n    def solve(self):\r\n        if not self.current_input:\r\n            return \"ERROR\"  # No input provided\r\n\r\n        try:\r\n            terms = self.tokenize(self.current_input)\r\n        except ValueError:  # Error during tokenization\r\n            return \"ERROR\"\r\n\r\n        # If it's just a constant, return 0\r\n        if len(terms) == 1 and terms[0][1] == 0:\r\n            return \"0\"\r\n\r\n        # Compute the derivative\r\n        derivative_terms = []\r\n        for coeff, power in terms:\r\n            if power > 0:  # Compute derivative using power rule\r\n                new_coeff = coeff * power\r\n                new_power = power - 1\r\n                if new_power == 0:\r\n                    derivative_terms.append(f\"{new_coeff}\")\r\n                elif new_power == 1:\r\n                    derivative_terms.append(f\"{new_coeff}x\")\r\n                else:\r\n                    derivative_terms.append(f\"{new_coeff}x^{new_power}\")\r\n\r\n        return \" + \".join(derivative_terms)\r\n\r\n    def tokenize(self, expression):\r\n        \"\"\"Parse polynomial input into a list of (coefficient, power) tuples.\"\"\"\r\n        stack = deque()\r\n        i = 0\r\n        sign = 1  # To track current sign (+1 for positive, -1 for negative)\r\n\r\n        while i < len(expression):\r\n            if expression[i] in {'+', '-'}:  # Update the sign\r\n                sign = -1 if expression[i] == '-' else 1\r\n                i += 1\r\n            elif expression[i].isdigit():  # Parse coefficient\r\n                num = \"\"\r\n                while i < len(expression) and expression[i].isdigit():\r\n                    num += expression[i]\r\n                    i += 1\r\n                stack.append((sign * int(num), 0))  # Append constant with sign\r\n                sign = 1  # Reset sign after parsing a term\r\n            elif expression[i] == 'x':  # Parse variable term\r\n                coeff = sign  # Default coefficient is the current sign\r\n                power = 1  # Default power is 1\r\n\r\n                # Check for coefficient before 'x'\r\n                if stack and isinstance(stack[-1], tuple) and stack[-1][1] == 0:\r\n                    coeff = stack.pop()[0]\r\n\r\n                # Check for exponent\r\n                if i + 1 < len(expression) and expression[i + 1:i + 2] == '^':\r\n                    i += 2  # Skip '^'\r\n                    power = \"\"\r\n                    while i < len(expression) and expression[i].isdigit():\r\n                        power += expression[i]\r\n                        i += 1\r\n                    power = int(power)\r\n\r\n                stack.append((coeff, power))\r\n                sign = 1  # Reset sign after parsing a term\r\n            else:  # Unrecognized character\r\n                raise ValueError(\"Invalid character in expression\")\r\n\r\n        return list(stack)\r\n\r\n    def draw_ui(self):\r\n        # Background\r\n        self.screen.fill((20, 25, 92))\r\n\r\n        # Display box for input\r\n        pygame.draw.rect(self.screen, (255, 255, 255), (600, 150, 500, 80))\r\n        input_surface = self.render_expression(self.current_input, (0, 0, 0))\r\n        self.screen.blit(input_surface, (610, 160))\r\n\r\n        # Display box for result\r\n        pygame.draw.rect(self.screen, (255, 255, 255), (600, 250, 500, 80))\r\n        result_surface = self.render_expression(self.result, (0, 0, 0))\r\n        self.screen.blit(result_surface, (610, 260))\r\n\r\n        # Draw buttons\r\n        for button in self.buttons:\r\n            button.draw(self.screen)\r\n\r\n    def render_expression(self, expression, color):\r\n        \"\"\"Render an expression with raised exponents.\"\"\"\r\n        surface = pygame.Surface((500, 80), pygame.SRCALPHA)\r\n        x_offset = 0\r\n        for char in expression:\r\n            if char == '^':  # Render exponent slightly raised\r\n                continue\r\n            if char in {'2', '3', '4'} and expression[x_offset - 1:x_offset] == '^':\r\n                exponent_surface = self.font.render(char, True, color)\r\n                surface.blit(exponent_surface, (x_offset, -20))  # Raise exponent\r\n                x_offset += exponent_surface.get_width()\r\n            else:\r\n                char_surface = self.font.render(char, True, color)\r\n                surface.blit(char_surface, (x_offset, 0))\r\n                x_offset += char_surface.get_width()\r\n        return surface\r\n\r\n    def run(self):\r\n        while self.running:\r\n            for event in pygame.event.get():\r\n                if event.type == pygame.QUIT:\r\n                    pygame.quit()\r\n                    sys.exit()\r\n                elif event.type == pygame.MOUSEBUTTONDOWN:\r\n                    for button in self.buttons:\r\n                        if button.is_hovered():\r\n                            self.handle_input(button.label)\r\n\r\n            self.draw_ui()\r\n            pygame.display.flip()\r\n
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/calculator.py b/calculator.py
+--- a/calculator.py	(revision 64a4c364cf06d9fd5383ccf189ad523393723090)
++++ b/calculator.py	(date 1732154369734)
+@@ -51,22 +51,27 @@
+             self.back_function()
+ 
+     def solve(self):
++        """
++        Solve the derivative of the polynomial represented by self.current_input.
++        Returns the derivative as a string.
++        """
+         if not self.current_input:
+-            return "ERROR"  # No input provided
++            return "ERROR"  # Return an error if the input is empty
+ 
+         try:
++            # Tokenize the input into terms
+             terms = self.tokenize(self.current_input)
+-        except ValueError:  # Error during tokenization
+-            return "ERROR"
++        except ValueError:
++            return "ERROR"  # Return an error for invalid input
+ 
+         # If it's just a constant, return 0
+         if len(terms) == 1 and terms[0][1] == 0:
+             return "0"
+ 
+-        # Compute the derivative
++        # Compute the derivative using the power rule
+         derivative_terms = []
+         for coeff, power in terms:
+-            if power > 0:  # Compute derivative using power rule
++            if power > 0:  # Apply power rule: d/dx [c * x^n] = n * c * x^(n-1)
+                 new_coeff = coeff * power
+                 new_power = power - 1
+                 if new_power == 0:
+@@ -76,47 +81,70 @@
+                 else:
+                     derivative_terms.append(f"{new_coeff}x^{new_power}")
+ 
+-        return " + ".join(derivative_terms)
++        # Join terms together, ensuring no redundant '+' or '-' signs
++        result = " + ".join(derivative_terms).replace("+ -", "- ")
++        return result
++
+ 
+     def tokenize(self, expression):
+-        """Parse polynomial input into a list of (coefficient, power) tuples."""
++        """
++        Parse a polynomial input string into a list of (coefficient, power) tuples.
++        Handles positive and negative terms, proper placement of coefficients,
++        and ensures valid syntax.
++        """
++        # Use a deque to store parsed terms (coefficient, power) as tuples
+         stack = deque()
+-        i = 0
+-        sign = 1  # To track current sign (+1 for positive, -1 for negative)
++
++        # Initialize parsing variables
++        i = 0  # Current position in the expression
++        sign = 1  # Tracks the current sign (+1 for positive, -1 for negative)
++        last_was_operator = True  # Tracks if the last character was an operator
+ 
+         while i < len(expression):
+-            if expression[i] in {'+', '-'}:  # Update the sign
++            # Handle '+' or '-' operators
++            if expression[i] in {'+', '-'}:
++                # Update the sign: -1 for '-', +1 for '+'
+                 sign = -1 if expression[i] == '-' else 1
+-                i += 1
+-            elif expression[i].isdigit():  # Parse coefficient
++                last_was_operator = True  # Mark that the last character was an operator
++                i += 1  # Move to the next character
++            elif expression[i].isdigit():
++                # Parse a numeric coefficient
+                 num = ""
+                 while i < len(expression) and expression[i].isdigit():
+-                    num += expression[i]
++                    num += expression[i]  # Build the number character by character
+                     i += 1
+-                stack.append((sign * int(num), 0))  # Append constant with sign
+-                sign = 1  # Reset sign after parsing a term
+-            elif expression[i] == 'x':  # Parse variable term
++                # Append the coefficient as a constant term (power 0)
++                stack.append((sign * int(num), 0))
++                sign = 1  # Reset sign after processing the term
++                last_was_operator = False  # Mark that the last character was a number
++            elif expression[i] == 'x':
++                # Parse a term involving the variable 'x'
+                 coeff = sign  # Default coefficient is the current sign
+-                power = 1  # Default power is 1
++                power = 1  # Default power is 1 (if no '^' is provided)
+ 
+-                # Check for coefficient before 'x'
+-                if stack and isinstance(stack[-1], tuple) and stack[-1][1] == 0:
++                # Check for an explicit coefficient before 'x'
++                if stack and not last_was_operator and stack[-1][1] == 0:
++                    # Replace the last constant term with its coefficient
+                     coeff = stack.pop()[0]
+ 
+-                # Check for exponent
+-                if i + 1 < len(expression) and expression[i + 1:i + 2] == '^':
+-                    i += 2  # Skip '^'
+-                    power = ""
++                # Check for exponentiation (e.g., 'x^2')
++                if i + 1 < len(expression) and expression[i + 1] == '^':
++                    i += 2  # Skip the '^'
++                    power_str = ""
+                     while i < len(expression) and expression[i].isdigit():
+-                        power += expression[i]
++                        power_str += expression[i]  # Build the exponent value
+                         i += 1
+-                    power = int(power)
++                    power = int(power_str)  # Convert exponent to an integer
+ 
++                # Append the parsed term to the stack
+                 stack.append((coeff, power))
+-                sign = 1  # Reset sign after parsing a term
+-            else:  # Unrecognized character
+-                raise ValueError("Invalid character in expression")
++                sign = 1  # Reset sign
++                last_was_operator = False  # Mark that the last character was part of a term
++            else:
++                # Raise an error for any unrecognized character
++                raise ValueError(f"Invalid character in expression: {expression[i]}")
+ 
++        # Return the final stack as a list of terms
+         return list(stack)
+ 
+     def draw_ui(self):
+Index: .idea/workspace.xml
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.BaseRevisionTextPatchEP
+<+><?xml version=\"1.0\" encoding=\"UTF-8\"?>\r\n<project version=\"4\">\r\n  <component name=\"AutoImportSettings\">\r\n    <option name=\"autoReloadType\" value=\"SELECTIVE\" />\r\n  </component>\r\n  <component name=\"ChangeListManager\">\r\n    <list default=\"true\" id=\"8e19d85c-d04c-4771-b380-4fe3efa9f31e\" name=\"Changes\" comment=\"push\">\r\n      <change afterPath=\"$PROJECT_DIR$/flashcard.py\" afterDir=\"false\" />\r\n      <change afterPath=\"$PROJECT_DIR$/linklist.py\" afterDir=\"false\" />\r\n      <change afterPath=\"$PROJECT_DIR$/listnode.py\" afterDir=\"false\" />\r\n      <change afterPath=\"$PROJECT_DIR$/queuemodule.py\" afterDir=\"false\" />\r\n      <change afterPath=\"$PROJECT_DIR$/stack.py\" afterDir=\"false\" />\r\n      <change beforePath=\"$PROJECT_DIR$/.idea/workspace.xml\" beforeDir=\"false\" afterPath=\"$PROJECT_DIR$/.idea/workspace.xml\" afterDir=\"false\" />\r\n      <change beforePath=\"$PROJECT_DIR$/button.py\" beforeDir=\"false\" afterPath=\"$PROJECT_DIR$/button.py\" afterDir=\"false\" />\r\n      <change beforePath=\"$PROJECT_DIR$/main.py\" beforeDir=\"false\" afterPath=\"$PROJECT_DIR$/main.py\" afterDir=\"false\" />\r\n    </list>\r\n    <option name=\"SHOW_DIALOG\" value=\"false\" />\r\n    <option name=\"HIGHLIGHT_CONFLICTS\" value=\"true\" />\r\n    <option name=\"HIGHLIGHT_NON_ACTIVE_CHANGELIST\" value=\"false\" />\r\n    <option name=\"LAST_RESOLUTION\" value=\"IGNORE\" />\r\n  </component>\r\n  <component name=\"FileTemplateManagerImpl\">\r\n    <option name=\"RECENT_TEMPLATES\">\r\n      <list>\r\n        <option value=\"Python Script\" />\r\n      </list>\r\n    </option>\r\n  </component>\r\n  <component name=\"Git.Settings\">\r\n    <option name=\"RECENT_GIT_ROOT_PATH\" value=\"$PROJECT_DIR$\" />\r\n    <option name=\"UPDATE_TYPE\" value=\"REBASE\" />\r\n  </component>\r\n  <component name=\"ProjectColorInfo\">{\r\n  &quot;associatedIndex&quot;: 7\r\n}</component>\r\n  <component name=\"ProjectId\" id=\"2p2GI46WoqnBUSgIaWVGyFdTGrw\" />\r\n  <component name=\"ProjectLevelVcsManager\" settingsEditedManually=\"true\" />\r\n  <component name=\"ProjectViewState\">\r\n    <option name=\"hideEmptyMiddlePackages\" value=\"true\" />\r\n    <option name=\"showLibraryContents\" value=\"true\" />\r\n  </component>\r\n  <component name=\"PropertiesComponent\">{\r\n  &quot;keyToString&quot;: {\r\n    &quot;Python.main.executor&quot;: &quot;Run&quot;,\r\n    &quot;RunOnceActivity.OpenProjectViewOnStart&quot;: &quot;true&quot;,\r\n    &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,\r\n    &quot;git-widget-placeholder&quot;: &quot;master&quot;\r\n  }\r\n}</component>\r\n  <component name=\"RunManager\">\r\n    <configuration name=\"main\" type=\"PythonConfigurationType\" factoryName=\"Python\" nameIsGenerated=\"true\">\r\n      <module name=\"CompSciCYOUnit2\" />\r\n      <option name=\"ENV_FILES\" value=\"\" />\r\n      <option name=\"INTERPRETER_OPTIONS\" value=\"\" />\r\n      <option name=\"PARENT_ENVS\" value=\"true\" />\r\n      <envs>\r\n        <env name=\"PYTHONUNBUFFERED\" value=\"1\" />\r\n      </envs>\r\n      <option name=\"SDK_HOME\" value=\"\" />\r\n      <option name=\"WORKING_DIRECTORY\" value=\"$PROJECT_DIR$\" />\r\n      <option name=\"IS_MODULE_SDK\" value=\"false\" />\r\n      <option name=\"ADD_CONTENT_ROOTS\" value=\"true\" />\r\n      <option name=\"ADD_SOURCE_ROOTS\" value=\"true\" />\r\n      <option name=\"SCRIPT_NAME\" value=\"$PROJECT_DIR$/main.py\" />\r\n      <option name=\"PARAMETERS\" value=\"\" />\r\n      <option name=\"SHOW_COMMAND_LINE\" value=\"false\" />\r\n      <option name=\"EMULATE_TERMINAL\" value=\"false\" />\r\n      <option name=\"MODULE_MODE\" value=\"false\" />\r\n      <option name=\"REDIRECT_INPUT\" value=\"false\" />\r\n      <option name=\"INPUT_FILE\" value=\"\" />\r\n      <method v=\"2\" />\r\n    </configuration>\r\n  </component>\r\n  <component name=\"SharedIndexes\">\r\n    <attachedChunks>\r\n      <set>\r\n        <option value=\"bundled-python-sdk-5a2391486177-d3b881c8e49f-com.jetbrains.pycharm.community.sharedIndexes.bundled-PC-233.13763.11\" />\r\n      </set>\r\n    </attachedChunks>\r\n  </component>\r\n  <component name=\"SpellCheckerSettings\" RuntimeDictionaries=\"0\" Folders=\"0\" CustomDictionaries=\"0\" DefaultDictionary=\"application-level\" UseSingleDictionary=\"true\" transferred=\"true\" />\r\n  <component name=\"TaskManager\">\r\n    <task active=\"true\" id=\"Default\" summary=\"Default task\">\r\n      <changelist id=\"8e19d85c-d04c-4771-b380-4fe3efa9f31e\" name=\"Changes\" comment=\"\" />\r\n      <created>1731956673141</created>\r\n      <option name=\"number\" value=\"Default\" />\r\n      <option name=\"presentableId\" value=\"Default\" />\r\n      <updated>1731956673141</updated>\r\n    </task>\r\n    <task id=\"LOCAL-00001\" summary=\"push\">\r\n      <option name=\"closed\" value=\"true\" />\r\n      <created>1731956806805</created>\r\n      <option name=\"number\" value=\"00001\" />\r\n      <option name=\"presentableId\" value=\"LOCAL-00001\" />\r\n      <option name=\"project\" value=\"LOCAL\" />\r\n      <updated>1731956806805</updated>\r\n    </task>\r\n    <task id=\"LOCAL-00002\" summary=\"push\">\r\n      <option name=\"closed\" value=\"true\" />\r\n      <created>1731956852345</created>\r\n      <option name=\"number\" value=\"00002\" />\r\n      <option name=\"presentableId\" value=\"LOCAL-00002\" />\r\n      <option name=\"project\" value=\"LOCAL\" />\r\n      <updated>1731956852345</updated>\r\n    </task>\r\n    <task id=\"LOCAL-00003\" summary=\"push\">\r\n      <option name=\"closed\" value=\"true\" />\r\n      <created>1731957206623</created>\r\n      <option name=\"number\" value=\"00003\" />\r\n      <option name=\"presentableId\" value=\"LOCAL-00003\" />\r\n      <option name=\"project\" value=\"LOCAL\" />\r\n      <updated>1731957206623</updated>\r\n    </task>\r\n    <task id=\"LOCAL-00004\" summary=\"push\">\r\n      <option name=\"closed\" value=\"true\" />\r\n      <created>1732041675064</created>\r\n      <option name=\"number\" value=\"00004\" />\r\n      <option name=\"presentableId\" value=\"LOCAL-00004\" />\r\n      <option name=\"project\" value=\"LOCAL\" />\r\n      <updated>1732041675064</updated>\r\n    </task>\r\n    <option name=\"localTasksCounter\" value=\"5\" />\r\n    <servers />\r\n  </component>\r\n  <component name=\"VcsManagerConfiguration\">\r\n    <MESSAGE value=\"push\" />\r\n    <option name=\"LAST_COMMIT_MESSAGE\" value=\"push\" />\r\n  </component>\r\n</project>
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/.idea/workspace.xml b/.idea/workspace.xml
+--- a/.idea/workspace.xml	(revision 64a4c364cf06d9fd5383ccf189ad523393723090)
++++ b/.idea/workspace.xml	(date 1732154339915)
+@@ -5,14 +5,10 @@
+   </component>
+   <component name="ChangeListManager">
+     <list default="true" id="8e19d85c-d04c-4771-b380-4fe3efa9f31e" name="Changes" comment="push">
+-      <change afterPath="$PROJECT_DIR$/flashcard.py" afterDir="false" />
+-      <change afterPath="$PROJECT_DIR$/linklist.py" afterDir="false" />
+-      <change afterPath="$PROJECT_DIR$/listnode.py" afterDir="false" />
+-      <change afterPath="$PROJECT_DIR$/queuemodule.py" afterDir="false" />
+-      <change afterPath="$PROJECT_DIR$/stack.py" afterDir="false" />
++      <change beforePath="$PROJECT_DIR$/.idea/CompSciCYOUnit2.iml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/CompSciCYOUnit2.iml" afterDir="false" />
++      <change beforePath="$PROJECT_DIR$/.idea/shelf/Uncommitted_changes_before_Update_at_11_20_2024_12_29_PM__Changes_.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/shelf/Uncommitted_changes_before_Update_at_11_20_2024_12_29_PM__Changes_.xml" afterDir="false" />
+       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+-      <change beforePath="$PROJECT_DIR$/button.py" beforeDir="false" afterPath="$PROJECT_DIR$/button.py" afterDir="false" />
+-      <change beforePath="$PROJECT_DIR$/main.py" beforeDir="false" afterPath="$PROJECT_DIR$/main.py" afterDir="false" />
++      <change beforePath="$PROJECT_DIR$/calculator.py" beforeDir="false" afterPath="$PROJECT_DIR$/calculator.py" afterDir="false" />
+     </list>
+     <option name="SHOW_DIALOG" value="false" />
+     <option name="HIGHLIGHT_CONFLICTS" value="true" />
+@@ -28,7 +24,6 @@
+   </component>
+   <component name="Git.Settings">
+     <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
+-    <option name="UPDATE_TYPE" value="REBASE" />
+   </component>
+   <component name="ProjectColorInfo">{
+   &quot;associatedIndex&quot;: 7
+Index: .idea/CompSciCYOUnit2.iml
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.BaseRevisionTextPatchEP
+<+><?xml version=\"1.0\" encoding=\"UTF-8\"?>\r\n<module type=\"PYTHON_MODULE\" version=\"4\">\r\n  <component name=\"NewModuleRootManager\">\r\n    <content url=\"file://$MODULE_DIR$\">\r\n      <excludeFolder url=\"file://$MODULE_DIR$/.venv\" />\r\n    </content>\r\n    <orderEntry type=\"inheritedJdk\" />\r\n    <orderEntry type=\"sourceFolder\" forTests=\"false\" />\r\n  </component>\r\n</module>
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/.idea/CompSciCYOUnit2.iml b/.idea/CompSciCYOUnit2.iml
+--- a/.idea/CompSciCYOUnit2.iml	(revision 64a4c364cf06d9fd5383ccf189ad523393723090)
++++ b/.idea/CompSciCYOUnit2.iml	(date 1732154064541)
+@@ -4,7 +4,7 @@
+     <content url="file://$MODULE_DIR$">
+       <excludeFolder url="file://$MODULE_DIR$/.venv" />
+     </content>
+-    <orderEntry type="inheritedJdk" />
++    <orderEntry type="jdk" jdkName="Python 3.12 (CompSciCYOUnit2)" jdkType="Python SDK" />
+     <orderEntry type="sourceFolder" forTests="false" />
+   </component>
+ </module>
+\ No newline at end of file

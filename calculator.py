@@ -35,44 +35,39 @@ class DerivativeCalculator:
                 self.buttons.append(Button(label, x, y, button_width, button_height))
 
     def handle_input(self, label):
-        if label.isdigit():  # Numbers
+        if label.isdigit():
             self.current_input += label
-        elif label == 'C':  # Backspace
+        elif label == 'C':
             self.current_input = self.current_input[:-1]
-        elif label == 'AC':  # Clear
+        elif label == 'AC':
             self.current_input = ""
             self.result = ""
-        elif label in {'+', '-'}:  # Operators
+        elif label in {'+', '-'}:
             self.current_input += label
-        elif label in {'x', 'x^2', 'x^3', 'x^4'}:  # Polynomial terms
+        elif label in {'x', 'x^2', 'x^3', 'x^4'}:
             self.current_input += label
-        elif label == 'Solve':  # Solve for derivative
+        elif label == 'Solve':
             self.result = self.solve()
-        elif label == 'Back':  # Return to main page
+        elif label == 'Back':
             self.back_function()
 
     def solve(self):
-        """
-        Solve the derivative of the polynomial represented by self.current_input.
-        Returns the derivative as a string.
-        """
         if not self.current_input:
-            return "ERROR"  # Return an error if the input is empty
+            return "ERROR"
 
         try:
-            # Tokenize the input into terms
-            terms = self.tokenize(self.current_input)
+            terms = self.convert(self.current_input)
         except ValueError:
-            return "ERROR"  # Return an error for invalid input
+            return "ERROR"
 
         # If it's just a constant, return 0
         if len(terms) == 1 and terms[0][1] == 0:
             return "0"
 
-        # Compute the derivative using the power rule
+        # Solve the derivative using the power rule
         derivative_terms = []
         for coeff, power in terms:
-            if power > 0:  # Apply power rule: d/dx [c * x^n] = n * c * x^(n-1)
+            if power > 0:
                 new_coeff = coeff * power
                 new_power = power - 1
                 if new_power == 0:
@@ -82,16 +77,10 @@ class DerivativeCalculator:
                 else:
                     derivative_terms.append(f"{new_coeff}x^{new_power}")
 
-        # Join terms together, ensuring no redundant '+' or '-' signs
         result = " + ".join(derivative_terms).replace("+ -", "- ")
         return result
 
-    def tokenize(self, expression):
-        """
-        Parse a polynomial input string into a list of (coefficient, power) tuples.
-        Handles positive and negative terms, proper placement of coefficients,
-        and ensures valid syntax.
-        """
+    def convert(self, expression):
         stack = Stack()
         i = 0
         sign = 1
@@ -105,41 +94,38 @@ class DerivativeCalculator:
                 while i < len(expression) and expression[i].isdigit():
                     num += expression[i]
                     i += 1
-                if i < len(expression) and expression[i] == 'x':  # If followed by 'x'
-                    coeff = sign * int(num)  # Use the parsed number as coefficient
-                    power = 1  # Default power for 'x' is 1
-                    i += 1  # Skip 'x'
-                    if i < len(expression) and expression[i] == '^':  # Handle powers
-                        i += 1  # Skip '^'
+                if i < len(expression) and expression[i] == 'x':
+                    coefficient = sign * int(num)
+                    power = 1
+                    i += 1
+                    if i < len(expression) and expression[i] == '^':
+                        i += 1
                         power_str = ""
                         while i < len(expression) and expression[i].isdigit():
                             power_str += expression[i]
                             i += 1
                         power = int(power_str)
-                    stack.push((coeff, power))
-                else:  # If not followed by 'x', it's a constant
+                    stack.push((coefficient, power))
+                else:
                     stack.push((sign * int(num), 0))
                 sign = 1
             elif expression[i] == 'x':
-                coeff = sign  # Default coefficient is 1 (or -1 based on sign)
+                coefficient = sign
                 power = 1
                 i += 1
-                if i < len(expression) and expression[i] == '^':  # Handle powers
-                    i += 1  # Skip '^'
+                if i < len(expression) and expression[i] == '^':
+                    i += 1
                     power_str = ""
                     while i < len(expression) and expression[i].isdigit():
                         power_str += expression[i]
                         i += 1
                     power = int(power_str)
-                stack.push((coeff, power))
+                stack.push((coefficient, power))
                 sign = 1
-            else:
-                raise ValueError(f"Invalid character in expression: {expression[i]}")
 
-        # Convert stack into list for processing
         terms = []
-        while stack.available:  # While there are elements in the stack
-            terms.insert(0, stack.pop())  # Insert at the beginning to reverse order
+        while stack.available:
+            terms.insert(0, stack.pop())
 
         return terms
 
@@ -162,20 +148,21 @@ class DerivativeCalculator:
             button.draw(self.screen)
 
     def render_expression(self, expression, color):
-        """Render an expression with raised exponents."""
         surface = pygame.Surface((500, 80), pygame.SRCALPHA)
         x_offset = 0
+
         for char in expression:
-            if char == '^':  # Render exponent slightly raised
+            if char == '^':
                 continue
             if char in {'2', '3', '4'} and expression[x_offset - 1:x_offset] == '^':
                 exponent_surface = self.font.render(char, True, color)
-                surface.blit(exponent_surface, (x_offset, -20))  # Raise exponent
+                surface.blit(exponent_surface, (x_offset, -20))
                 x_offset += exponent_surface.get_width()
             else:
                 char_surface = self.font.render(char, True, color)
                 surface.blit(char_surface, (x_offset, 0))
                 x_offset += char_surface.get_width()
+
         return surface
 
     def run(self):
