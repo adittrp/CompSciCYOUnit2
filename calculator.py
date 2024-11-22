@@ -1,7 +1,8 @@
 import pygame
 import sys
 from button import Button
-from collections import deque
+from stack import Stack
+
 
 class DerivativeCalculator:
     def __init__(self, screen, back_function):
@@ -91,15 +92,13 @@ class DerivativeCalculator:
         Handles positive and negative terms, proper placement of coefficients,
         and ensures valid syntax.
         """
-        stack = deque()
+        stack = Stack()
         i = 0
         sign = 1
-        last_was_operator = True
 
         while i < len(expression):
             if expression[i] in {'+', '-'}:
                 sign = -1 if expression[i] == '-' else 1
-                last_was_operator = True
                 i += 1
             elif expression[i].isdigit():
                 num = ""
@@ -117,11 +116,10 @@ class DerivativeCalculator:
                             power_str += expression[i]
                             i += 1
                         power = int(power_str)
-                    stack.append((coeff, power))
+                    stack.push((coeff, power))
                 else:  # If not followed by 'x', it's a constant
-                    stack.append((sign * int(num), 0))
+                    stack.push((sign * int(num), 0))
                 sign = 1
-                last_was_operator = False
             elif expression[i] == 'x':
                 coeff = sign  # Default coefficient is 1 (or -1 based on sign)
                 power = 1
@@ -133,13 +131,17 @@ class DerivativeCalculator:
                         power_str += expression[i]
                         i += 1
                     power = int(power_str)
-                stack.append((coeff, power))
+                stack.push((coeff, power))
                 sign = 1
-                last_was_operator = False
             else:
                 raise ValueError(f"Invalid character in expression: {expression[i]}")
 
-        return list(stack)
+        # Convert stack into list for processing
+        terms = []
+        while stack.available:  # While there are elements in the stack
+            terms.insert(0, stack.pop())  # Insert at the beginning to reverse order
+
+        return terms
 
     def draw_ui(self):
         # Background
@@ -179,7 +181,7 @@ class DerivativeCalculator:
     def run(self):
         while self.running:
             for event in pygame.event.get():
-                if event.type == pygame.QUIT:
+                if event.type == pygame.QUIT or (event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE):
                     pygame.quit()
                     sys.exit()
                 elif event.type == pygame.MOUSEBUTTONDOWN:

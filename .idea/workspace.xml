@@ -5,10 +5,18 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="8e19d85c-d04c-4771-b380-4fe3efa9f31e" name="Changes" comment="push">
-      <change afterPath="$PROJECT_DIR$/schedule.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/CompSciCYOUnit2.iml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/CompSciCYOUnit2.iml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/shelf/Uncommitted_changes_before_Update_at_11_20_2024_12_29_PM__Changes_.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/shelf/Uncommitted_changes_before_Update_at_11_20_2024_12_29_PM__Changes_.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/button.py" beforeDir="false" afterPath="$PROJECT_DIR$/button.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/calculator.py" beforeDir="false" afterPath="$PROJECT_DIR$/calculator.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/flashcard.py" beforeDir="false" afterPath="$PROJECT_DIR$/flashcard.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/linklist.py" beforeDir="false" afterPath="$PROJECT_DIR$/linklist.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/listnode.py" beforeDir="false" afterPath="$PROJECT_DIR$/listnode.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/main.py" beforeDir="false" afterPath="$PROJECT_DIR$/main.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/queuemodule.py" beforeDir="false" afterPath="$PROJECT_DIR$/queuemodule.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/schedule.py" beforeDir="false" afterPath="$PROJECT_DIR$/schedule.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/stack.py" beforeDir="false" afterPath="$PROJECT_DIR$/stack.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -69,7 +77,7 @@
   <component name="SharedIndexes">
     <attachedChunks>
       <set>
-        <option value="bundled-python-sdk-babbdf50b680-746f403e7f0c-com.jetbrains.pycharm.community.sharedIndexes.bundled-PC-241.15989.155" />
+        <option value="bundled-python-sdk-5a2391486177-d3b881c8e49f-com.jetbrains.pycharm.community.sharedIndexes.bundled-PC-233.13763.11" />
       </set>
     </attachedChunks>
   </component>
@@ -114,15 +122,7 @@
       <option name="project" value="LOCAL" />
       <updated>1732041675064</updated>
     </task>
-    <task id="LOCAL-00005" summary="push">
-      <option name="closed" value="true" />
-      <created>1732130198326</created>
-      <option name="number" value="00005" />
-      <option name="presentableId" value="LOCAL-00005" />
-      <option name="project" value="LOCAL" />
-      <updated>1732130198326</updated>
-    </task>
-    <option name="localTasksCounter" value="6" />
+    <option name="localTasksCounter" value="5" />
     <servers />
   </component>
   <component name="VcsManagerConfiguration">

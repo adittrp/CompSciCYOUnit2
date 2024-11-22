@@ -1,5 +1,6 @@
 import pygame
 
+
 class Button:
     def __init__(self, label, x, y, width, height):
         self.label = label
