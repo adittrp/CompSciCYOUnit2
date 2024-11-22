@@ -66,16 +66,16 @@ class DerivativeCalculator:
 
         # Solve the derivative using the power rule
         derivative_terms = []
-        for coeff, power in terms:
+        for coefficient, power in terms:
             if power > 0:
-                new_coeff = coeff * power
+                new_coefficient = coefficient * power
                 new_power = power - 1
                 if new_power == 0:
-                    derivative_terms.append(f"{new_coeff}")
+                    derivative_terms.append(f"{new_coefficient}")
                 elif new_power == 1:
-                    derivative_terms.append(f"{new_coeff}x")
+                    derivative_terms.append(f"{new_coefficient}x")
                 else:
-                    derivative_terms.append(f"{new_coeff}x^{new_power}")
+                    derivative_terms.append(f"{new_coefficient}x^{new_power}")
 
         result = " + ".join(derivative_terms).replace("+ -", "- ")
         return result
